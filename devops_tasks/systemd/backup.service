@@ -1,0 +1,5 @@
+[Unit]
+Description=Backup /etc directory
+
+[Service]
+ExecStart=/usr/local/bin/backup.sh

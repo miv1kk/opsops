@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+    environment {
+        PYTHONUNBUFFERED = '1'
+    }
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+        stage('Install dependencies') {
+            steps { sh 'pip install -r requirements.txt' }
+        }
+        stage('Run tests') {
+            steps { echo 'No tests implemented yet.' }
+        }
+        stage('Build Docker Image') {
+            steps { sh 'docker build -t flask-app:jenkins .' }
+        }
+        stage('Push to Registry') {
+            when {
+                expression { return env.BRANCH_NAME == 'main' }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker tag flask-app:jenkins $DOCKER_USERNAME/flask-app:latest
+                        docker push $DOCKER_USERNAME/flask-app:latest
+                    '''
+                }
+            }
+        }
+    }
+}
